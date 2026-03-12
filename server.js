@@ -143,6 +143,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`✨ Derde Deva Kuran sunucusu (1.5-flash) çalışıyor: http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✨ Derde Deva Kuran sunucusu (1.5-flash) çalışıyor: http://0.0.0.0:${PORT}`);
 });
