@@ -1,9 +1,15 @@
 require('dotenv').config();
+const { Pinecone } = require('@pinecone-database/pinecone');
 const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const path = require('path');
 const multer = require('multer');
 const { processAndIngestPDF, retrieveContext } = require('./ingestion');
+
+// Pinecone bağlantısını şu şekilde güncelle:
+const pc = new Pinecone({
+  apiKey: process.env.PINECONE_API_KEY || "pcsk_dummy_key_to_prevent_crash_on_railway_boot"
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;

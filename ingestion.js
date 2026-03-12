@@ -4,9 +4,13 @@ const { Pinecone } = require('@pinecone-database/pinecone');
 const pdfParse = require('pdf-parse');
 const { v4: uuidv4 } = require('uuid');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
-const index = pinecone.index(process.env.PINECONE_INDEX_NAME);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AIza_YOUR_GEMINI_KEY");
+
+// Pinecone bağlantısını şu şekilde güncelle:
+const pc = new Pinecone({
+  apiKey: process.env.PINECONE_API_KEY || "pcsk_dummy_key_to_prevent_crash_on_railway_boot"
+});
+const index = pc.index(process.env.PINECONE_INDEX_NAME || "dijital-bilge");
 
 /**
  * Metni belirli bir token (karakter bazlı) büyüklüğünde ve overlap (örtüşme) ile böler.
