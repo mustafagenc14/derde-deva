@@ -20,8 +20,13 @@ function getPineconeIndex() {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 console.log(`[Startup] Port ayarlandı: ${PORT}`);
+
+// Railway takibi için her 10 saniyede bir "hayattayım" logu atalım
+setInterval(() => {
+  console.log(`[Heartbeat] Sunucu aktif, Port: ${PORT}, Zaman: ${new Date().toISOString()}`);
+}, 10000);
 
 // Configure Multer to store uploaded PDFs in memory temporarily
 const upload = multer({ storage: multer.memoryStorage() });
@@ -165,5 +170,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✨ Derde Deva Kuran sunucusu (1.5-flash) çalışıyor: http://0.0.0.0:${PORT}`);
+  console.log(`✨ Sunucu ${PORT} portunda (0.0.0.0) başarıyla ayağa kalktı.`);
 });
