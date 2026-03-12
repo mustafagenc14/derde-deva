@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Kalbini yoran ne varsa yaz. Kur'an-ı Kerim'den sana özel bir ayet ve bilge bir tavsiye gelsin." />
+  <title>Derde Deva Kuran</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <!-- ========== GIRIŞ EKRANI ========== -->
+  <section id="input-screen" class="screen active">
+    <div class="input-container">
+      <div class="logo-area">
+        <span class="logo-Arabic">﷽</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <p class="prompt-text">Seni buraya ne getirdi?</p>
+
+      <form id="problem-form" autocomplete="off">
+        <textarea
+          id="problem-input"
+          name="problem"
+          placeholder="Kalbini yoran ne varsa buraya yaz… Hiç kimse okumayacak, sadece sen ve kelimeler."
+          rows="5"
+          maxlength="1000"
+          required
+        ></textarea>
+        <div class="form-footer">
+          <span id="char-count">0 / 1000</span>
+          <button type="submit" id="submit-btn">
+            <span class="btn-text">Cevap Ara</span>
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ========== YÜKLEME EKRANI ========== -->
+  <section id="loading-screen" class="screen">
+    <div class="loading-container">
+      <div class="orb-wrapper">
+        <div class="orb"></div>
+        <div class="orb-ring ring-1"></div>
+        <div class="orb-ring ring-2"></div>
+        <div class="orb-ring ring-3"></div>
+        <div class="particles">
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+          <span class="particle"></span>
+        </div>
+      </div>
+      <p class="loading-text">Derinlere iniliyor<span class="dot-anim">...</span></p>
+      <p class="loading-subtext">Binlerce ayet arasından sana olan aranıyor</p>
+    </div>
+  </section>
+
+  <!-- ========== SONUÇ EKRANI ========== -->
+  <section id="result-screen" class="screen">
+    <div class="result-container">
+
+      <div id="export-card" class="export-card hidden">
+        <div class="export-watermark">﷽ دَرْدَه دَوَا</div>
+        <div id="verse-block" class="verse-block">
+          <div class="verse-ornament">❦</div>
+          <blockquote id="verse-text" class="verse-text"></blockquote>
+          <p id="verse-source" class="verse-source"></p>
+        </div>
+
+        <div id="advice-block" class="advice-block hidden">
+          <div class="advice-divider">
+            <span>✦</span>
+          </div>
+          <p id="advice-text" class="advice-text"></p>
+          <span id="typewriter-cursor" class="cursor hidden">|</span>
+        </div>
+        <div class="export-footer">derdedeva.app</div>
+      </div>
+
+      <div id="action-buttons" class="action-buttons hidden">
+        <button id="share-btn" class="share-btn hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>
+          </svg>
+          Görseli İndir / Paylaş
+        </button>
+      </div>
+
+      <div id="error-block" class="error-block hidden">
+        <p class="error-icon">⚠</p>
+        <p id="error-message" class="error-message"></p>
+      </div>
+
+      <button id="back-btn" class="back-btn hidden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Yeni bir soru sor
+      </button>
+
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

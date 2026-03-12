@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Derde Deva Kuran - Admin Panel</title>
+  <style>
+    body {
+      background: #080810;
+      color: #e8e4db;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .admin-card {
+      background: #12121f;
+      padding: 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(201, 169, 110, 0.2);
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    h2 {
+      color: #c9a96e;
+      font-weight: 300;
+      margin-bottom: 2rem;
+      letter-spacing: 2px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      color: #8a8480;
+    }
+    input[type="file"], input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      background: #0d0d1a;
+      border: 1px solid rgba(201, 169, 110, 0.2);
+      color: #e8e4db;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #c9a96e;
+      color: #080810;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: opacity 0.3s;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    button:disabled {
+      background: #4a4640;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #8a8480;
+    }
+    .success { color: #4caf50 !important; }
+    .error { color: #f44336 !important; }
+  </style>
+</head>
+<body>
+
+  <div class="admin-card">
+    <h2>DİJİTAL KÜTÜPHANE</h2>
+    <p style="font-size: 0.8rem; color: #8a8480; margin-bottom: 25px;">PDF dosyalarını yükleyerek RAG vektör veritabanını (Pinecone) eğitin.</p>
+    
+    <form id="uploadForm">
+      <div class="form-group">
+        <label for="adminPass">Admin Şifresi</label>
+        <input type="password" id="adminPass" required placeholder="Giriş şifresi">
+      </div>
+      <div class="form-group">
+        <label for="pdfFile">PDF Belgesi Seç</label>
+        <input type="file" id="pdfFile" accept="application/pdf" required>
+      </div>
+      <button type="submit" id="submitBtn">Eğitmeye Başla (Vektörleştir)</button>
+    </form>
+    
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const statusDiv = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const fileInput = document.getElementById('pdfFile');
+      const passInput = document.getElementById('adminPass');
+      
+      if (!fileInput.files[0]) return;
+
+      const formData = new FormData();
+      formData.append('document', fileInput.files[0]);
+
+      submitBtn.disabled = true;
+      statusDiv.textContent = 'PDF Okunup Yapay Zekaya İşleniyor (Bu işlem dosya boyutuna göre birkaç dakika sürebilir)...';
+      statusDiv.className = '';
+
+      try {
+        const response = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${passInput.value}`
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          statusDiv.textContent = `✅ Başarılı: ${result.message}`;
+          statusDiv.className = 'success';
+          form.reset();
+        } else {
+          statusDiv.textContent = `❌ Hata: ${result.error} ${result.detail || ''}`;
+          statusDiv.className = 'error';
+        }
+      } catch (err) {
+        statusDiv.textContent = `❌ Sunucuya ulaşılamadı.`;
+        statusDiv.className = 'error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
