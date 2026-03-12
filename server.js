@@ -80,9 +80,9 @@ app.post('/api/deva', async (req, res) => {
     // 2. Gemini Yapay Zeka Başlat (Çoklu Model Yedekleme Sistemi)
     const genAI = new GoogleGenerativeAI(apiKey);
     const modelsToTry = [
+      'gemini-2.5-flash', // Diagnostic script ile doğrulanan model
+      'gemini-2.0-flash',
       'gemini-1.5-flash',
-      'gemini-2.0-flash', // En yeni kararlı sürüm
-      'gemini-2.0-flash-exp', // Deneysel sürüm
       'gemini-1.5-pro'
     ];
 
