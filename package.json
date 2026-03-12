@@ -4,7 +4,7 @@
   "description": "Derde Deva Kuran - AI destekli manevi rehberlik uygulaması",
   "main": "server.js",
   "scripts": {
-    "start": "concurrently \"node server.js\" \"node watcher.js\"",
+    "start": "node server.js",
     "dev": "concurrently \"node server.js\" \"node watcher.js\""
   },
   "dependencies": {
