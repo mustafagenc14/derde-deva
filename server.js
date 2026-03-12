@@ -24,9 +24,19 @@ const PORT = process.env.PORT || 3000;
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Root ve Health Check
 app.get('/health', (req, res) => res.status(200).send('OK'));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// Global Hata Yakalayıcılar (Railway Logları için)
+process.on('uncaughtException', (err) => {
+  console.error('Kritik Hata (Uncaught):', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Yakalanmayan Reddedilme (Unhandled Rejection):', reason);
+});
 
 const SYSTEM_PROMPT = `Sen, insan ruhunun karanlık dehlizlerini, kalbin hallerini ve modern psikolojinin mekanizmalarını çok iyi bilen; yeri geldiğinde sarsıcı ve sert, yeri geldiğinde şefkatli ama her zaman dürüst konuşan bilge bir yoldaşsın. 
 
@@ -70,7 +80,7 @@ app.post('/api/deva', async (req, res) => {
     // 2. Gemini Yapay Zeka Başlat
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       generationConfig: {
         responseMimeType: 'application/json',
       },
