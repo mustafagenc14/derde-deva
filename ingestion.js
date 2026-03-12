@@ -6,11 +6,15 @@ const { v4: uuidv4 } = require('uuid');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AIza_YOUR_GEMINI_KEY");
 
-// Pinecone bağlantısını şu şekilde güncelle:
-const pc = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY || "pcsk_dummy_key_to_prevent_crash_on_railway_boot"
-});
-const index = pc.index(process.env.PINECONE_INDEX_NAME || "dijital-bilge");
+let pc;
+function getIndex() {
+  if (!pc) {
+    pc = new Pinecone({
+      apiKey: process.env.PINECONE_API_KEY || "pcsk_dummy_key_to_prevent_crash_on_railway_boot"
+    });
+  }
+  return pc.index(process.env.PINECONE_INDEX_NAME || "dijital-bilge");
+}
 
 /**
  * Metni belirli bir token (karakter bazlı) büyüklüğünde ve overlap (örtüşme) ile böler.
@@ -102,7 +106,7 @@ async function processAndIngestPDF(pdfBuffer, sourceName) {
     const batchSize = 50;
     for (let i = 0; i < vectorsToUpsert.length; i += batchSize) {
       const batch = vectorsToUpsert.slice(i, i + batchSize);
-      await index.upsert({ records: batch });
+      await getIndex().upsert({ records: batch });
       console.log(`[Ingestion] Batch ${i / batchSize + 1} yüklendi.`);
     }
 
@@ -122,7 +126,7 @@ async function processAndIngestPDF(pdfBuffer, sourceName) {
 async function retrieveContext(query, topK = 3) {
   try {
     const queryEmbedding = await getEmbedding(query);
-    const queryResponse = await index.query({
+    const queryResponse = await getIndex().query({
       vector: queryEmbedding,
       topK: topK,
       includeMetadata: true

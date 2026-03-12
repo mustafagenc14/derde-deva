@@ -6,10 +6,16 @@ const path = require('path');
 const multer = require('multer');
 const { processAndIngestPDF, retrieveContext } = require('./ingestion');
 
-// Pinecone bağlantısını şu şekilde güncelle:
-const pc = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY || "pcsk_dummy_key_to_prevent_crash_on_railway_boot"
-});
+// Pinecone bağlantısını lazy (ihtiyaç anında) kuracak şekilde hazırlıyoruz
+let pc;
+function getPineconeIndex() {
+  if (!pc) {
+    pc = new Pinecone({
+      apiKey: process.env.PINECONE_API_KEY || "pcsk_dummy_key_to_prevent_crash_on_railway_boot"
+    });
+  }
+  return pc.index(process.env.PINECONE_INDEX_NAME || "dijital-bilge");
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +24,9 @@ const PORT = process.env.PORT || 3000;
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// Root ve Health Check
+app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const SYSTEM_PROMPT = `Sen, insan ruhunun karanlık dehlizlerini, kalbin hallerini ve modern psikolojinin mekanizmalarını çok iyi bilen; yeri geldiğinde sarsıcı ve sert, yeri geldiğinde şefkatli ama her zaman dürüst konuşan bilge bir yoldaşsın. 
 
