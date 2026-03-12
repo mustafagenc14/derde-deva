@@ -77,19 +77,47 @@ app.post('/api/deva', async (req, res) => {
       ? `\n\nALGI (CONTEXT) METİNLERİ:\n${contextPassages.map((p, i) => `[PASAJ ${i+1}]: ${p}`).join('\n')}`
       : '\n\nALGI: Veritabanında ek bir edebi bağlam bulunamadı, mevcut bilgeliğini kullan.';
 
-    // 2. Gemini Yapay Zeka Başlat
+    // 2. Gemini Yapay Zeka Başlat (Çoklu Model Yedekleme Sistemi)
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      generationConfig: {
-        responseMimeType: 'application/json',
-      },
-    });
+    const modelsToTry = [
+      'gemini-1.5-flash',
+      'gemini-2.0-flash', // En yeni kararlı sürüm
+      'gemini-2.0-flash-exp', // Deneysel sürüm
+      'gemini-1.5-pro'
+    ];
 
-    // 3. Prompt'u bağlamla harmanla
-    const fullPrompt = `${SYSTEM_PROMPT}${contextString}\n\nKullanıcının sorunu: "${problem}"`;
+    let result;
+    let successModel = '';
+    let lastError = null;
 
-    const result = await model.generateContent(fullPrompt);
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`[Gemini] Deneniyor: ${modelName}...`);
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            responseMimeType: 'application/json',
+          },
+        });
+
+        // Prompt'u bağlamla harmanla
+        const fullPrompt = `${SYSTEM_PROMPT}${contextString}\n\nKullanıcının sorunu: "${problem}"`;
+        
+        result = await model.generateContent(fullPrompt);
+        successModel = modelName;
+        console.log(`[Gemini] Başarılı: ${modelName}`);
+        break; // Biri çalışırsa döngüden çık
+      } catch (err) {
+        console.error(`[Gemini] Hata (${modelName}):`, err.message);
+        lastError = err;
+        // Eğer 404 ise bir sonrakini dene, değilse (kota vb.) muhtemelen hepsi hata verecektir ama şansımızı deneyelim
+      }
+    }
+
+    if (!result) {
+      throw lastError || new Error('Uygun bir AI modeli bulunamadı.');
+    }
+
     const responseText = result.response.text();
 
     let parsed;
@@ -108,7 +136,7 @@ app.post('/api/deva', async (req, res) => {
       throw new Error('Eksik JSON alanları.');
     }
 
-    return res.json(parsed);
+    return res.json({ ...parsed, _meta: { model: successModel } });
 
   } catch (err) {
     console.error('Gemini API Hatası:', err.message);
