@@ -169,6 +169,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✨ Sunucu ${PORT} portunda (0.0.0.0) başarıyla ayağa kalktı.`);
+app.listen(PORT, () => {
+  console.log(`✨ Sunucu ${PORT} portunda başarıyla ayağa kalktı.`);
 });
