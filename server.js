@@ -1,4 +1,6 @@
+console.log('[Startup] Sunucu başlatılıyor...');
 require('dotenv').config();
+console.log('[Startup] dotenv yüklendi.');
 const { Pinecone } = require('@pinecone-database/pinecone');
 const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -19,6 +21,7 @@ function getPineconeIndex() {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+console.log(`[Startup] Port ayarlandı: ${PORT}`);
 
 // Configure Multer to store uploaded PDFs in memory temporarily
 const upload = multer({ storage: multer.memoryStorage() });
