@@ -106,7 +106,7 @@ async function processAndIngestPDF(pdfBuffer, sourceName) {
     const batchSize = 50;
     for (let i = 0; i < vectorsToUpsert.length; i += batchSize) {
       const batch = vectorsToUpsert.slice(i, i + batchSize);
-      await getIndex().upsert({ records: batch });
+      await getIndex().upsert(batch);
       console.log(`[Ingestion] Batch ${i / batchSize + 1} yüklendi.`);
     }
 
