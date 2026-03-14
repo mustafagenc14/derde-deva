@@ -8,12 +8,12 @@
     "dev": "concurrently \"node server.js\" \"node watcher.js\""
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "@pinecone-database/pinecone": "^7.1.0",
-    "chokidar": "^5.0.0",
+    "@pinecone-database/pinecone": "^3.0.3",
+    "chokidar": "^3.6.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
