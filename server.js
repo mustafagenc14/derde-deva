@@ -97,9 +97,9 @@ YASAKLAR: "Gazali der ki", "Psikolojiye göre", "Şu peygamberin hayatında geç
 }`;
 
 app.post('/api/deva', devaLimiter, async (req, res) => {
-  const { problem } = req.body;
+  const problem = req.body.problem?.trim()?.slice(0, 1000);
 
-  if (!problem || problem.trim().length === 0) {
+  if (!problem || problem.length === 0) {
     return res.status(400).json({ error: 'Lütfen bir sorun belirtin.' });
   }
 
@@ -210,7 +210,7 @@ app.post('/api/admin/upload', upload.single('document'), async (req, res) => {
   
   // Basit admin şifresi kontrolü (.env'de ADMIN_PASSWORD beklenebilir veya basit mock konulabilir)
   const authHeader = req.headers['authorization'];
-  if (authHeader !== 'Bearer dritte-deva-admin-sekret') {
+  if (!process.env.ADMIN_PASSWORD || authHeader !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
     return res.status(403).json({ error: 'Yetkisiz erişim.' });
   }
 
