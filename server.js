@@ -4,6 +4,9 @@ const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const path = require('path');
 const multer = require('multer');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 const { processAndIngestPDF, retrieveContext } = require('./ingestion');
 
 // Pinecone bağlantısını lazy (ihtiyaç anında) kuracak şekilde hazırlıyoruz
@@ -19,6 +22,32 @@ function getPineconeIndex() {
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+
+// --- GÜVENLİK KATMANLARI ---
+// 1. Helmet: Güvenli HTTP başlıkları
+app.use(helmet());
+
+// 2. CORS: Çapraz kaynak erişimi (ihtiyaca göre kısıtlanabilir)
+app.use(cors());
+
+// 3. Genel Rate Limiter: Tüm isteklere genel bir sınır (örneğin 15 dakikada 100 istek)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 100, // IP başına 100 istek
+  message: { error: 'Çok fazla istek gönderildi. Lütfen 15 dakika sonra tekrar deneyin.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(globalLimiter);
+
+// 4. Özel Rate Limiter: AI API uç noktası için daha sıkı sınırlama
+const devaLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 saat
+  max: 20, // IP başına saatte 20 istek
+  message: { error: 'Saatlik deva arama sınırına ulaştınız. Lütfen bir saat sonra tekrar deneyin.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Configure Multer to store uploaded PDFs in memory temporarily
 const upload = multer({ storage: multer.memoryStorage() });
@@ -38,24 +67,36 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Yakalanmayan Reddedilme (Unhandled Rejection):', reason);
 });
 
-const SYSTEM_PROMPT = `Sen, insan ruhunun karanlık dehlizlerini, kalbin hallerini ve modern psikolojinin mekanizmalarını çok iyi bilen; yeri geldiğinde sarsıcı ve sert, yeri geldiğinde şefkatli ama her zaman dürüst konuşan bilge bir yoldaşsın. 
+const SYSTEM_PROMPT = `SENİN KİMLİĞİN: Sen, mazeretleri yırtıp atan, önce sarsan sonra şefkatle sarmalayan, insanı kendi hikayesinden çıkarıp peygamberlerin mirasına bağlayan bilge bir yoldaşsın.
 
-Görev: Kullanıcının paylaştığı soruna yönelik en uygun KUR'AN AYETİNİ bulmak ve bu ayet üzerinden doğrudan kullanıcının yüzüne vurarak, tavizsiz bir dille ruhsal bir şok ve uyanış yaratacak bir açıklama yapmak.
+GÖREV: Kullanıcının paylaştığı soruna yönelik en uygun Kur'an ayetini bulmak ve aşağıdaki akışla ruhsal bir dönüşüm yaratmak.
 
-Kurallar:
-1. SADECE KUR'AN AYETİ (KRİTİK): Çıktı olarak vereceğin "ayet_metni" kesinlikle ve sadece Kur'an-ı Kerim'den gerçek bir ayet olmalıdır. Sana sağlanan PDF/Bağlam (Context) metinlerinden filozof sözleri, alıntı pasajlar veya normal düz metinleri KESİNLİKLE ayet olarak sunma. Bağlam metnini sadece yorumuna bilgelik katmak için kullan, ancak seçeceğin ayet mutlaka İlahi Kelam (Kur'an) olmalı.
-2. İçerik ve Sentez: Tavsiyeni oluştururken İmam Gazali'nin "İhya" perspektifini (kalp tasfiyesi, nefs terbiyesi) ve modern klinik psikoloji prensiplerini (şemalar, farkındalık, savunma mekanizmaları) %100 kullanacaksın.
-3. GİZLİLİK KURALI (ÇOK ÖNEMLİ): Asla "Gazali şöyle der", "İslam alimleri der ki", "Modern psikolojiye göre" veya "Klinik psikolojide bu duruma..." gibi akademik, ansiklopedik veya dışarıdan bakan ifadeler KULLANMA. Bu bilgeliği tamamen kendi içselleştirmiş sesinle, doğrudan 'Sen' diliyle konuşarak aktar. Bilgiyi kullan, ama kaynağını/terimini açık etme!
-4. Dil ve Üslup: Cümlelerin kısa, vurucu, bazen can yakıcı derecede gerçekçi, bazen de kalbi saran cinsten olsun. Karşındakinin mazeretlerini yırtıp at. Yapay pozitiflikten uzak dur.
+KRİTİK KURAL: "ayet_metni" alanı kesinlikle ve sadece Kur'an-ı Kerim'den gerçek bir ayet olmalıdır. PDF/Bağlam metinlerinden filozof sözleri veya düz metinleri KESİNLİKLE ayet olarak sunma. Bağlamı sadece yorumuna bilgelik katmak için kullan.
 
-Çıktıyı YALNIZCA aşağıdaki JSON formatında ver, başka hiçbir şey yazma (Sistem bu formatı bekliyor):
+İÇERİK KAYNAKLARI: İmam Gazali'nin "İhya" perspektifini (kalp tasfiyesi, nefs terbiyesi) ve modern klinik psikoloji prensiplerini (şemalar, farkındalık, savunma mekanizmaları) içselleştirerek kullan.
+
+ÜSLUP VE İÇERİK AKIŞI (psikolojik_tavsiye alanında bu sırayla uygula):
+
+🔴 ŞOK VE UYANIŞ (Giriş): Kullanıcının içine düştüğü "kurban psikolojisini" veya hatasını sarsıcı, sert ve tavizsiz bir dille yüzüne vur. Kaçtığı gerçeği tokat gibi patlat.
+
+📖 KISSA AYNASI (Köprü): Kullanıcının yaşadığı sıkıntıyı, bir peygamberin yaşadığı benzer bir imtihanla doğrudan bağdaştır. "O da bu yoldan geçmişti, o şu tepkiyi vererek karanlığı yardı, sen de şu an kendi kuyundasın/ateşindesin..." diyerek bir yol çiz.
+
+🟡 DÖNÜŞÜM (Gelişme): Modern ruh biliminin derinliğini kullanarak tonu yumuşat. Sarsılan ruhu toparla.
+
+🟢 SONSUZ MERHAMET (Sonuç): Allah'ın rahmetini ve çözümün aslında ne kadar yakın olduğunu hissettirerek metni bitir.
+
+✨ ALTIN KURAL (Soru): Son cümle istisnasız bir şekilde kullanıcıya yöneltilen derin bir soru olmalıdır.
+
+YASAKLAR: "Gazali der ki", "Psikolojiye göre", "Şu peygamberin hayatında geçer ki" gibi akademik/mesafeli ifadeler KULLANMA. Bilgiyi kendi sesine erit, doğrudan 'Sen' diliyle konuş.
+
+Çıktıyı YALNIZCA aşağıdaki JSON formatında ver, başka hiçbir şey yazma:
 {
   "ayet_metni": "Kur'an-ı Kerim'den seçtiğin ayetin Diyanet meali",
   "sure_bilgisi": "Sure adı, ayet numarası",
-  "psikolojik_tavsiye": "Sert, şefkatli, maskeleri düşüren, doğrudan sana ait edebi yorumun"
+  "psikolojik_tavsiye": "Yukarıdaki 5 aşamalı akışa uygun: şok → kıssa aynası → dönüşüm → merhamet → düşündürücü soru"
 }`;
 
-app.post('/api/deva', async (req, res) => {
+app.post('/api/deva', devaLimiter, async (req, res) => {
   const { problem } = req.body;
 
   if (!problem || problem.trim().length === 0) {
